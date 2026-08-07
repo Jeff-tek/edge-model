@@ -8,25 +8,32 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 API_BASE = "https://api.the-odds-api.com/v4"
-SPORT = "soccer_fifa_world_cup"  # default; overridden by SPORT_KEY env
+SPORT = "soccer_epl"  # default fallback; overridden by SPORT_KEY env
 MARKETS = "totals"
 
-# The free tier allows one sport key. Common soccer keys:
-# soccer_epl, soccer_la_liga, soccer_serie_a, soccer_bundesliga,
-# soccer_ligue_one, soccer_eredivisie, soccer_brazil_serie_a,
-# soccer_japan_j_league, soccer_argentina_primera_division, etc.
-SPORT_KEYS = [
-    "soccer_epl",
-    "soccer_la_liga",
-    "soccer_serie_a",
-    "soccer_bundesliga",
-    "soccer_ligue_one",
+# Model league code -> TheOddsAPI sport key (verified active as of 2026-08).
+LEAGUE_SPORT_KEYS: dict[str, str] = {
+    "E0": "soccer_epl",
+    "SP1": "soccer_spain_la_liga",
+    "I1": "soccer_italy_serie_a",
+    "D1": "soccer_germany_bundesliga",
+    "F1": "soccer_france_ligue_one",
+}
+
+# Common soccer keys (kept for reference / manual SPORT_KEY override):
+# soccer_epl, soccer_spain_la_liga, soccer_italy_serie_a,
+# soccer_germany_bundesliga, soccer_france_ligue_one, soccer_eredivisie,
+# soccer_brazil_serie_a, soccer_japan_j_league,
+# soccer_argentina_primera_division, soccer_portugal_primeira_liga,
+# soccer_belgium_first_div, soccer_germany_bundesliga2, etc.
+SPORT_KEYS = list(LEAGUE_SPORT_KEYS.values()) + [
     "soccer_eredivisie",
     "soccer_brazil_serie_a",
     "soccer_japan_j_league",
@@ -135,4 +142,34 @@ def group_fixtures_by_line(fixtures: list[Fixture], line: float = 2.5) -> list[t
             if abs(tl.point - line) < 1e-9:
                 out.append((f, tl))
                 break
+    return out
+
+
+def fetch_fixtures_by_league(
+    *,
+    key: str | None = None,
+    leagues: list[str] | None = None,
+    timeout: int = 60,
+) -> dict[str, list[Fixture]]:
+    """Fetch upcoming fixtures for each model league.
+
+    Returns {league_code: [Fixture]}. A league whose sport key is inactive or
+    unreachable is skipped with a warning rather than failing the whole run.
+    """
+    api_key = key or _api_key()
+    wanted = leagues or list(LEAGUE_SPORT_KEYS)
+    out: dict[str, list[Fixture]] = {}
+    for league in wanted:
+        sport = LEAGUE_SPORT_KEYS.get(league)
+        if sport is None:
+            print(f"[fixtures] no sport key for league {league!r}, skipping")
+            continue
+        try:
+            fixtures = fetch_fixtures(key=api_key, sport_key=sport, timeout=timeout)
+            out[league] = fixtures
+            print(f"[fixtures] {league} ({sport}): {len(fixtures)} fixtures")
+        except urllib.error.HTTPError as exc:
+            print(f"[fixtures] {league} ({sport}) unavailable ({exc.code}): {exc.reason}")
+        except urllib.error.URLError as exc:
+            print(f"[fixtures] {league} ({sport}) network error: {exc.reason}")
     return out

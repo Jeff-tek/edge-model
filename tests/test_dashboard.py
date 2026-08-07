@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -263,3 +264,52 @@ def test_write_payload_roundtrip(tmp_path: Path) -> None:
     loaded = json.loads(out.read_text())
     assert loaded["strategy"]["min_legs"] == MIN_LEGS
     assert loaded["tips"]["status"] == "no_bet"
+
+
+def test_fetch_fixtures_by_league_multiple_leagues(monkeypatch: pytest.MonkeyPatch) -> None:
+    import edge_model.data.fixtures as fixtures_mod
+
+    fixture_payload = [
+        {
+            "id": "1",
+            "commence_time": "2026-08-15T19:00:00Z",
+            "home_team": "Arsenal",
+            "away_team": "Chelsea",
+            "bookmakers": [
+                {
+                    "markets": [
+                        {
+                            "key": "totals",
+                            "outcomes": [
+                                {"name": "Over", "point": 2.5, "price": 1.22},
+                                {"name": "Under", "point": 2.5, "price": 1.60},
+                            ],
+                        }
+                    ]
+                }
+            ],
+        }
+    ]
+
+    def fake_get_json(url: str, timeout: int = 60) -> object:
+        return fixture_payload if "soccer_epl" in url else []
+
+    monkeypatch.setattr(fixtures_mod, "_get_json", fake_get_json)
+    by_league = fixtures_mod.fetch_fixtures_by_league(key="test", leagues=["E0", "SP1"])
+    assert set(by_league) == {"E0", "SP1"}
+    assert len(by_league["E0"]) == 1
+    fx = by_league["E0"][0]
+    assert fx.home == "Arsenal"
+    assert fx.away == "Chelsea"
+    assert len(by_league["SP1"]) == 0
+
+
+def test_fetch_fixtures_by_league_skips_inactive_league(monkeypatch: pytest.MonkeyPatch) -> None:
+    import edge_model.data.fixtures as fixtures_mod
+
+    def fake_get_json(url: str, timeout: int = 60) -> object:
+        raise urllib.error.HTTPError(url, 403, "Forbidden", None, None)
+
+    monkeypatch.setattr(fixtures_mod, "_get_json", fake_get_json)
+    by_league = fixtures_mod.fetch_fixtures_by_league(key="test", leagues=["E0", "I1"])
+    assert by_league == {}

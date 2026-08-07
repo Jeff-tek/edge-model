@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -463,17 +462,26 @@ def main() -> None:
     else:
         try:
             from edge_model.cli.daily import _candidate_legs_from_api
-            from edge_model.data.fixtures import fetch_fixtures
+            from edge_model.data.fixtures import fetch_fixtures_by_league
 
-            fixtures = fetch_fixtures()
+            by_league = fetch_fixtures_by_league(leagues=args.leagues)
+            fixtures = [fx for fs in by_league.values() for fx in fs]
             raw_legs = _candidate_legs_from_api(model, fixtures)
             legs = [(leg, "") for leg in raw_legs]
-            league_code = _sport_key_to_league(os.environ.get("SPORT_KEY", ""))
             totals = _totals_odds_from_api(fixtures)
-            for fx in fixtures:
-                fixture_teams.append(
-                    (league_code, fx.home, fx.away, totals.get((fx.home, fx.away), {"line": None, "over": None, "under": None}))
-                )
+            for league, league_fixtures in by_league.items():
+                for fx in league_fixtures:
+                    fixture_teams.append(
+                        (
+                            league,
+                            fx.home,
+                            fx.away,
+                            totals.get(
+                                (fx.home, fx.away),
+                                {"line": None, "over": None, "under": None},
+                            ),
+                        )
+                    )
         except RuntimeError as exc:
             print(f"no live odds available: {exc}")
 
@@ -509,17 +517,6 @@ def main() -> None:
     )
     write_payload(payload, Path(args.out))
     print(f"[dashboard written to {args.out}]")
-
-
-def _sport_key_to_league(sport_key: str) -> str:
-    """Map a TheOddsAPI soccer sport key to our league code where known."""
-    return {
-        "soccer_epl": "E0",
-        "soccer_la_liga": "SP1",
-        "soccer_serie_a": "I1",
-        "soccer_bundesliga": "D1",
-        "soccer_ligue_one": "F1",
-    }.get(sport_key, "")
 
 
 if __name__ == "__main__":

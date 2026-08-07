@@ -20,7 +20,7 @@ from datetime import date
 from pathlib import Path
 
 from edge_model.backtest.backtest import run_backtest
-from edge_model.data.fixtures import Fixture, fetch_fixtures, group_fixtures_by_line
+from edge_model.data.fixtures import Fixture, group_fixtures_by_line
 from edge_model.data.football_data import load_league
 from edge_model.model.dixon_coles import TeamModel, fit_model, p_over
 from edge_model.report.briefing import build_briefing
@@ -123,7 +123,10 @@ def main() -> None:
         source = f"manual odds file ({args.odds})"
     else:
         try:
-            fixtures = fetch_fixtures()
+            from edge_model.data.fixtures import fetch_fixtures_by_league
+
+            by_league = fetch_fixtures_by_league(leagues=args.leagues)
+            fixtures = [fx for fs in by_league.values() for fx in fs]
             legs = _candidate_legs_from_api(model, fixtures)
             source = "TheOddsAPI live odds"
         except RuntimeError as exc:
