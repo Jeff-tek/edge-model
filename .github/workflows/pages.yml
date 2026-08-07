@@ -1,0 +1,58 @@
+name: Dashboard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # daily 07:00 UTC — refresh fixtures/tips/paper without the slow backtest
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e .
+      - name: Generate dashboard data
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SPORT_KEY: ${{ vars.SPORT_KEY }}
+        run: |
+          # Recompute the ~20min backtest on code pushes / manual runs,
+          # reuse the stored one on the daily cron to stay fast.
+          extra=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            extra="--skip-backtest"
+          fi
+          python -m edge_model.dashboard.generate $extra \
+            --out dashboard/data.json \
+            --seasons 2324 2425 2526 --leagues E0 SP1 I1 D1 F1
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -68,6 +68,8 @@ class BacktestResult:
     bets: tuple[BetRecord, ...]
     parlays: tuple[ParlayRecord, ...]
     stake_per_bet: float
+    qualifier_matchdays: int = 0  # days with >= 1 qualifying leg
+    feasible_matchdays: int = 0  # days with >= MIN_LEGS qualifying legs
 
     @property
     def n_bets(self) -> int:
@@ -164,6 +166,8 @@ def run_backtest(
     start, end = ordered[0].date, ordered[-1].date
     bets: list[BetRecord] = []
     parlays: list[ParlayRecord] = []
+    qualifier_matchdays = 0
+    feasible_matchdays = 0
     fair_implied = {key: 1.0 / (o * (1.0 + margin[key])) for key, o in odds.items()}
 
     cursor = start
@@ -189,6 +193,10 @@ def run_backtest(
                     )
 
         for day, cands in by_day.items():
+            if cands:
+                qualifier_matchdays += 1
+                if len(cands) >= MIN_LEGS:
+                    feasible_matchdays += 1
             legs: list[BetRecord] = []
             for match, side, line, prob, leg_odds in cands:
                 actual = match.home_goals + match.away_goals
@@ -243,5 +251,9 @@ def run_backtest(
         cursor = window_end + timedelta(days=1)
 
     return BacktestResult(
-        bets=tuple(bets), parlays=tuple(parlays), stake_per_bet=stake_per_bet
+        bets=tuple(bets),
+        parlays=tuple(parlays),
+        stake_per_bet=stake_per_bet,
+        qualifier_matchdays=qualifier_matchdays,
+        feasible_matchdays=feasible_matchdays,
     )

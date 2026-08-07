@@ -104,6 +104,7 @@ def main() -> None:
     parser.add_argument("--bankroll", type=float, default=2000.0)
     parser.add_argument("--book", default="data/paper_trades.csv")
     parser.add_argument("--out", default="data/briefing.md")
+    parser.add_argument("--dashboard", default="", help="also write dashboard JSON to this path")
     parser.add_argument("--backtest", action="store_true", help="also run the backtest")
     args = parser.parse_args()
 
@@ -142,6 +143,33 @@ def main() -> None:
     Path(args.out).write_text(briefing)
     print(briefing)
     print(f"\n[briefing written to {args.out}; source: {source}]")
+
+    if args.dashboard:
+        from edge_model.dashboard.generate import _legs_from_csv, build_payload, write_payload
+
+        if args.odds:
+            rows = _load_odds_csv(args.odds)
+            dashboard_legs = _legs_from_csv(model, rows)
+            fixture_teams: list[tuple[str, str, str, dict[str, object]]] = [
+                (row.get("league", ""), row["home"], row["away"], {"line": None, "over": None, "under": None})
+                for row in rows
+                if row.get("home") and row.get("away")
+            ]
+        else:
+            dashboard_legs = [(leg, "") for leg in legs]
+            fixture_teams = []
+        payload = build_payload(
+            matches=matches,
+            backtest_result=None,
+            model=model,
+            legs=dashboard_legs,
+            parlay=parlay,
+            paper=paper,
+            starting_bankroll=args.bankroll,
+            fixture_teams=fixture_teams,
+        )
+        write_payload(payload, Path(args.dashboard))
+        print(f"[dashboard written to {args.dashboard}]")
 
     if parlay is not None:
         for leg in parlay.legs:

@@ -1,0 +1,177 @@
+{
+  "generated_at": "2026-08-07T08:00:00Z",
+  "as_of_date": "2026-08-07",
+  "strategy": {
+    "markets": [["over", 1.5], ["under", 4.5]],
+    "leg_odds_window": [1.15, 1.25],
+    "target_parlay_odds": 5.0,
+    "min_legs": 8,
+    "max_legs": 13,
+    "min_edge": 0.03,
+    "pause_after_losses": 5,
+    "flat_book_odds": { "over:1.5": 1.22, "under:4.5": 1.12 },
+    "flat_book_margin": { "over:1.5": 0.04, "under:4.5": 0.05 }
+  },
+  "backtest": {
+    "matches": 5256,
+    "leagues": ["E0", "SP1", "I1", "D1", "F1"],
+    "seasons": ["2324", "2425", "2526"],
+    "parlays": 163,
+    "parlay_wins": 37,
+    "parlay_hit_rate": 0.227,
+    "roi": 0.225,
+    "net_profit": 3662.84,
+    "stake_per_bet": 100.0,
+    "legs": 1738,
+    "leg_hit_rate": 0.867,
+    "side_hit_rates": {
+      "over": { "count": 908, "hit_rate": 0.8458 },
+      "under": { "count": 830, "hit_rate": 0.8904 }
+    },
+    "calibration": [
+      { "bin_low": 0.7, "actual": 0.72, "n": 24 },
+      { "bin_low": 0.75, "actual": 0.78, "n": 210 },
+      { "bin_low": 0.8, "actual": 0.83, "n": 540 },
+      { "bin_low": 0.85, "actual": 0.88, "n": 720 },
+      { "bin_low": 0.9, "actual": 0.93, "n": 244 }
+    ],
+    "feasible_matchdays": 208,
+    "matchdays_with_qualifier": 526
+  },
+  "paper": {
+    "starting_bankroll": 2000.0,
+    "bankroll": 2058.33,
+    "net_pl": 58.33,
+    "hit_rate": 0.44,
+    "settled_bets": 9,
+    "win_streak": { "count": 2, "kind": "wins" },
+    "paused": false,
+    "bankroll_series": [
+      { "date": "2026-07-15", "bankroll": 2000.0, "pl": 0.0 },
+      { "date": "2026-07-18", "bankroll": 1915.0, "pl": -85.0 },
+      { "date": "2026-07-21", "bankroll": 1932.5, "pl": 17.5 },
+      { "date": "2026-07-24", "bankroll": 2010.0, "pl": 77.5 },
+      { "date": "2026-07-28", "bankroll": 1995.0, "pl": -15.0 },
+      { "date": "2026-08-01", "bankroll": 2047.5, "pl": 52.5 },
+      { "date": "2026-08-04", "bankroll": 2058.33, "pl": 10.83 }
+    ],
+    "weekly_pl": [
+      { "week_start": "2026-07-13", "pl": -85.0 },
+      { "week_start": "2026-07-20", "pl": 95.0 },
+      { "week_start": "2026-07-27", "pl": 37.5 },
+      { "week_start": "2026-08-03", "pl": 10.83 }
+    ],
+    "recent_trades": [
+      { "date": "2026-08-04", "league": "E0", "home": "Arsenal", "away": "Leicester", "side": "over", "line": 1.5, "odds": 1.22, "stake": 100.0, "result": "win", "payout": 122.0 },
+      { "date": "2026-08-04", "league": "I1", "home": "Inter", "away": "Como", "side": "under", "line": 4.5, "odds": 1.12, "stake": 100.0, "result": "win", "payout": 112.0 },
+      { "date": "2026-08-01", "league": "SP1", "home": "Real Madrid", "away": "Valladolid", "side": "over", "line": 1.5, "odds": 1.22, "stake": 100.0, "result": "win", "payout": 122.0 },
+      { "date": "2026-08-01", "league": "D1", "home": "Bayern", "away": "Bochum", "side": "over", "line": 1.5, "odds": 1.22, "stake": 100.0, "result": "loss", "payout": 0.0 },
+      { "date": "2026-07-28", "league": "F1", "home": "PSG", "away": "Lens", "side": "under", "line": 4.5, "odds": 1.12, "stake": 100.0, "result": "loss", "payout": 0.0 }
+    ]
+  },
+  "fixtures": [
+    {
+      "commence_time": "2026-08-08T19:00:00Z",
+      "league": "E0",
+      "home": "Arsenal",
+      "away": "Brighton",
+      "totals_odds": { "over": 1.22, "under": 1.60, "line": 2.5 },
+      "model": { "over1.5": 0.86, "under4.5": 0.93, "edge_over1.5": 0.04, "edge_under4.5": 0.02 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-08T19:00:00Z",
+      "league": "E0",
+      "home": "Chelsea",
+      "away": "Everton",
+      "totals_odds": { "over": 1.25, "under": 1.55, "line": 2.5 },
+      "model": { "over1.5": 0.80, "under4.5": 0.92, "edge_over1.5": 0.00, "edge_under4.5": 0.01 },
+      "qualifies": []
+    },
+    {
+      "commence_time": "2026-08-08T17:00:00Z",
+      "league": "SP1",
+      "home": "Real Madrid",
+      "away": "Girona",
+      "totals_odds": { "over": 1.20, "under": 1.65, "line": 2.5 },
+      "model": { "over1.5": 0.88, "under4.5": 0.90, "edge_over1.5": 0.06, "edge_under4.5": 0.01 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-09T18:45:00Z",
+      "league": "SP1",
+      "home": "Barcelona",
+      "away": "Athletic",
+      "totals_odds": { "over": 1.22, "under": 1.58, "line": 2.5 },
+      "model": { "over1.5": 0.84, "under4.5": 0.91, "edge_over1.5": 0.02, "edge_under4.5": 0.00 },
+      "qualifies": []
+    },
+    {
+      "commence_time": "2026-08-09T19:45:00Z",
+      "league": "I1",
+      "home": "Inter",
+      "away": "Milan",
+      "totals_odds": { "over": 1.23, "under": 1.57, "line": 2.5 },
+      "model": { "over1.5": 0.85, "under4.5": 0.89, "edge_over1.5": 0.03, "edge_under4.5": 0.00 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-09T13:30:00Z",
+      "league": "D1",
+      "home": "Bayern",
+      "away": "Wolfsburg",
+      "totals_odds": { "over": 1.19, "under": 1.70, "line": 2.5 },
+      "model": { "over1.5": 0.89, "under4.5": 0.88, "edge_over1.5": 0.08, "edge_under4.5": 0.00 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-10T18:45:00Z",
+      "league": "F1",
+      "home": "PSG",
+      "away": "Monaco",
+      "totals_odds": { "over": 1.21, "under": 1.62, "line": 2.5 },
+      "model": { "over1.5": 0.87, "under4.5": 0.90, "edge_over1.5": 0.05, "edge_under4.5": 0.01 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-10T14:00:00Z",
+      "league": "E0",
+      "home": "Liverpool",
+      "away": "Wolves",
+      "totals_odds": { "over": 1.20, "under": 1.66, "line": 2.5 },
+      "model": { "over1.5": 0.87, "under4.5": 0.91, "edge_over1.5": 0.05, "edge_under4.5": 0.01 },
+      "qualifies": ["over1.5"]
+    },
+    {
+      "commence_time": "2026-08-11T19:00:00Z",
+      "league": "SP1",
+      "home": "Atletico",
+      "away": "Sevilla",
+      "totals_odds": { "over": 1.24, "under": 1.54, "line": 2.5 },
+      "model": { "over1.5": 0.79, "under4.5": 0.94, "edge_over1.5": -0.01, "edge_under4.5": 0.02 },
+      "qualifies": []
+    }
+  ],
+  "tips": {
+    "date": "2026-08-07",
+    "status": "no_bet",
+    "no_bet_reason": "Only 5 qualifying legs today — need at least 8 to build a 5.0+ parlay. Forcing a leg would give the bookmaker's margin a free ride. Skip.",
+    "parlay": null,
+    "candidate_legs": [
+      { "home": "Arsenal", "away": "Brighton", "league": "E0", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.86, "fair_implied": 0.788, "edge": 0.072, "qualifies": true },
+      { "home": "Real Madrid", "away": "Girona", "league": "SP1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.88, "fair_implied": 0.788, "edge": 0.092, "qualifies": true },
+      { "home": "Inter", "away": "Milan", "league": "I1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.85, "fair_implied": 0.788, "edge": 0.062, "qualifies": true },
+      { "home": "Bayern", "away": "Wolfsburg", "league": "D1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.89, "fair_implied": 0.788, "edge": 0.102, "qualifies": true },
+      { "home": "PSG", "away": "Monaco", "league": "F1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.87, "fair_implied": 0.788, "edge": 0.082, "qualifies": true },
+      { "home": "Chelsea", "away": "Everton", "league": "E0", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.80, "fair_implied": 0.788, "edge": 0.012, "qualifies": false },
+      { "home": "Barcelona", "away": "Athletic", "league": "SP1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.84, "fair_implied": 0.788, "edge": 0.052, "qualifies": false },
+      { "home": "Liverpool", "away": "Wolves", "league": "E0", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.87, "fair_implied": 0.788, "edge": 0.082, "qualifies": true },
+      { "home": "Atletico", "away": "Sevilla", "league": "SP1", "side": "over", "line": 1.5, "odds": 1.22, "model_prob": 0.79, "fair_implied": 0.788, "edge": 0.002, "qualifies": false }
+    ],
+    "past_tips": [
+      { "date": "2026-08-04", "status": "bet", "legs": 9, "combined_odds": 5.42, "won": true, "payout": 542.0 },
+      { "date": "2026-08-01", "status": "bet", "legs": 10, "combined_odds": 5.80, "won": false, "payout": 0.0 },
+      { "date": "2026-07-28", "status": "no_bet", "legs": 0, "combined_odds": null, "won": null, "payout": null }
+    ]
+  }
+}

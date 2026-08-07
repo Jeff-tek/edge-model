@@ -1,0 +1,458 @@
+{
+  "generated_at": "2026-08-07T20:46:23.855619+00:00",
+  "as_of_date": "2026-08-07",
+  "strategy": {
+    "markets": [
+      [
+        "over",
+        1.5
+      ],
+      [
+        "under",
+        4.5
+      ]
+    ],
+    "leg_odds_window": [
+      1.15,
+      1.25
+    ],
+    "target_parlay_odds": 5.0,
+    "min_legs": 8,
+    "max_legs": 13,
+    "min_edge": 0.03,
+    "pause_after_losses": 5,
+    "flat_book_odds": {
+      "over:1.5": 1.22,
+      "under:4.5": 1.12
+    },
+    "flat_book_margin": {
+      "over:1.5": 0.04,
+      "under:4.5": 0.05
+    }
+  },
+  "backtest": {
+    "matches": 5256,
+    "leagues": [
+      "E0",
+      "SP1",
+      "I1",
+      "D1",
+      "F1"
+    ],
+    "seasons": [
+      "2324",
+      "2425",
+      "2526"
+    ],
+    "parlays": 163,
+    "parlay_wins": 37,
+    "parlay_hit_rate": 0.227,
+    "roi": 0.2247,
+    "net_profit": 3662.84,
+    "stake_per_bet": 100.0,
+    "legs": 1738,
+    "leg_hit_rate": 0.8671,
+    "side_hit_rates": {
+      "over": {
+        "count": 908,
+        "hit_rate": 0.8458
+      },
+      "under": {
+        "count": 830,
+        "hit_rate": 0.8904
+      }
+    },
+    "calibration": [
+      {
+        "bin_low": 0.8,
+        "actual": 0.867,
+        "n": 1737
+      }
+    ],
+    "feasible_matchdays": 208,
+    "matchdays_with_qualifier": 526
+  },
+  "paper": {
+    "starting_bankroll": 2000.0,
+    "bankroll": 2000.0,
+    "net_pl": 0,
+    "hit_rate": 0.0,
+    "settled_bets": 0,
+    "win_streak": {
+      "count": 0,
+      "kind": ""
+    },
+    "paused": false,
+    "bankroll_series": [
+      {
+        "date": "2026-08-07",
+        "bankroll": 2000.0,
+        "pl": 0.0
+      }
+    ],
+    "weekly_pl": [],
+    "recent_trades": []
+  },
+  "fixtures": [
+    {
+      "commence_time": null,
+      "league": "E0",
+      "home": "Arsenal",
+      "away": "Brighton",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.6123,
+        "under4.5": 0.9447,
+        "edge_over1.5": -0.1759,
+        "edge_under4.5": 0.0943
+      },
+      "qualifies": [
+        "under4.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "E0",
+      "home": "Chelsea",
+      "away": "Everton",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.6796,
+        "under4.5": 0.917,
+        "edge_over1.5": -0.1086,
+        "edge_under4.5": 0.0667
+      },
+      "qualifies": [
+        "under4.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "SP1",
+      "home": "Real Madrid",
+      "away": "Girona",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.8184,
+        "under4.5": 0.8031,
+        "edge_over1.5": 0.0303,
+        "edge_under4.5": -0.0472
+      },
+      "qualifies": [
+        "over1.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "SP1",
+      "home": "Barcelona",
+      "away": "Athletic",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.9183,
+        "under4.5": 0.6136,
+        "edge_over1.5": 0.1302,
+        "edge_under4.5": -0.2367
+      },
+      "qualifies": [
+        "over1.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "I1",
+      "home": "Inter",
+      "away": "Milan",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.8125,
+        "under4.5": 0.8121,
+        "edge_over1.5": 0.0243,
+        "edge_under4.5": -0.0383
+      },
+      "qualifies": []
+    },
+    {
+      "commence_time": null,
+      "league": "D1",
+      "home": "Bayern",
+      "away": "Wolfsburg",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.8923,
+        "under4.5": 0.6811,
+        "edge_over1.5": 0.1041,
+        "edge_under4.5": -0.1693
+      },
+      "qualifies": [
+        "over1.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "F1",
+      "home": "PSG",
+      "away": "Monaco",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.8606,
+        "under4.5": 0.746,
+        "edge_over1.5": 0.0724,
+        "edge_under4.5": -0.1044
+      },
+      "qualifies": [
+        "over1.5"
+      ]
+    },
+    {
+      "commence_time": null,
+      "league": "E0",
+      "home": "Liverpool",
+      "away": "Wolves",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.7782,
+        "under4.5": 0.8468,
+        "edge_over1.5": -0.01,
+        "edge_under4.5": -0.0036
+      },
+      "qualifies": []
+    },
+    {
+      "commence_time": null,
+      "league": "SP1",
+      "home": "Atletico",
+      "away": "Sevilla",
+      "totals_odds": {
+        "line": null,
+        "over": null,
+        "under": null
+      },
+      "model": {
+        "over1.5": 0.7867,
+        "under4.5": 0.8408,
+        "edge_over1.5": -0.0014,
+        "edge_under4.5": -0.0095
+      },
+      "qualifies": []
+    }
+  ],
+  "tips": {
+    "date": "2026-08-07",
+    "status": "bet",
+    "no_bet_reason": null,
+    "parlay": {
+      "legs": [
+        {
+          "home": "Barcelona",
+          "away": "Athletic",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.22
+        },
+        {
+          "home": "Bayern",
+          "away": "Wolfsburg",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.19
+        },
+        {
+          "home": "PSG",
+          "away": "Monaco",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.21
+        },
+        {
+          "home": "Inter",
+          "away": "Milan",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.23
+        },
+        {
+          "home": "Real Madrid",
+          "away": "Girona",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.2
+        },
+        {
+          "home": "Atletico",
+          "away": "Sevilla",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.24
+        },
+        {
+          "home": "Liverpool",
+          "away": "Wolves",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.2
+        },
+        {
+          "home": "Chelsea",
+          "away": "Everton",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.25
+        },
+        {
+          "home": "Arsenal",
+          "away": "Brighton",
+          "side": "over",
+          "line": 1.5,
+          "odds": 1.22
+        }
+      ],
+      "combined_odds": 5.88,
+      "model_prob": 0.1194,
+      "stake": 100.0
+    },
+    "candidate_legs": [
+      {
+        "home": "Barcelona",
+        "away": "Athletic",
+        "league": "SP1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.22,
+        "model_prob": 0.9183,
+        "fair_implied": 0.5643,
+        "edge": 0.3541,
+        "qualifies": true
+      },
+      {
+        "home": "Bayern",
+        "away": "Wolfsburg",
+        "league": "D1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.19,
+        "model_prob": 0.8923,
+        "fair_implied": 0.5882,
+        "edge": 0.304,
+        "qualifies": true
+      },
+      {
+        "home": "PSG",
+        "away": "Monaco",
+        "league": "F1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.21,
+        "model_prob": 0.8606,
+        "fair_implied": 0.5724,
+        "edge": 0.2882,
+        "qualifies": true
+      },
+      {
+        "home": "Inter",
+        "away": "Milan",
+        "league": "I1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.23,
+        "model_prob": 0.8125,
+        "fair_implied": 0.5607,
+        "edge": 0.2518,
+        "qualifies": true
+      },
+      {
+        "home": "Real Madrid",
+        "away": "Girona",
+        "league": "SP1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.2,
+        "model_prob": 0.8184,
+        "fair_implied": 0.5789,
+        "edge": 0.2395,
+        "qualifies": true
+      },
+      {
+        "home": "Atletico",
+        "away": "Sevilla",
+        "league": "SP1",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.24,
+        "model_prob": 0.7867,
+        "fair_implied": 0.554,
+        "edge": 0.2328,
+        "qualifies": true
+      },
+      {
+        "home": "Liverpool",
+        "away": "Wolves",
+        "league": "E0",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.2,
+        "model_prob": 0.7782,
+        "fair_implied": 0.5804,
+        "edge": 0.1978,
+        "qualifies": true
+      },
+      {
+        "home": "Chelsea",
+        "away": "Everton",
+        "league": "E0",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.25,
+        "model_prob": 0.6796,
+        "fair_implied": 0.5536,
+        "edge": 0.126,
+        "qualifies": true
+      },
+      {
+        "home": "Arsenal",
+        "away": "Brighton",
+        "league": "E0",
+        "side": "over",
+        "line": 1.5,
+        "odds": 1.22,
+        "model_prob": 0.6123,
+        "fair_implied": 0.5674,
+        "edge": 0.0449,
+        "qualifies": true
+      }
+    ],
+    "past_tips": []
+  }
+}

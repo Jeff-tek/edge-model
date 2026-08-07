@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edge Model — O1.5 / U4.5 Parlay Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>Edge Model <span class="dim">O1.5 / U4.5</span></h1>
+      <div class="topbar-meta">
+        <span id="asOf" class="meta-item">…</span>
+        <span id="generatedAt" class="meta-item">…</span>
+        <span id="dataSource" class="meta-item badge badge-neutral">…</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="kpis" class="kpi-grid" aria-label="Key numbers"></section>
+
+    <div class="grid-2">
+      <section class="card" id="card-backtest">
+        <h2>Backtest <span class="dim" id="bt-subtitle"></span></h2>
+        <div class="bt-kpis" id="bt-kpis"></div>
+        <div id="bt-calibration"></div>
+      </section>
+
+      <section class="card" id="card-paper">
+        <h2>Paper Trading</h2>
+        <div id="paper-charts"></div>
+        <h3>Recent trades</h3>
+        <div id="recent-trades"></div>
+      </section>
+    </div>
+
+    <div class="grid-2">
+      <section class="card" id="card-tips">
+        <h2>Today's Tip</h2>
+        <div id="tips"></div>
+      </section>
+
+      <section class="card" id="card-fixtures">
+        <h2>Upcoming Fixtures</h2>
+        <div id="fixtures"></div>
+      </section>
+    </div>
+
+    <section class="card" id="card-strategy">
+      <h2>Strategy</h2>
+      <div id="strategy"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span id="footer-note"></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
