@@ -89,8 +89,9 @@ def build_briefing(
         lines.append("## Pending bets awaiting settlement")
         lines.append("")
         for t in pending:
+            when = t.match_date.isoformat() if t.match_date else t.date.isoformat()
             lines.append(
-                f"- {t.date} {t.home} vs {t.away} | {t.side} {t.line:g} "
+                f"- {when} {t.home} vs {t.away} | {t.side} {t.line:g} "
                 f"@{t.odds:.2f} | stake ${t.stake:.0f}"
             )
         lines.append("")

@@ -16,6 +16,13 @@ const fmtMoney = (v) =>
 const fmtPct = (v) => (v * 100).toFixed(1) + "%";
 const fmtOdds = (v) => (v ? Number(v).toFixed(2) : "—");
 
+function fmtDateTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toUTCString().slice(0, 16) + " UTC";
+}
+
 function pctClass(v) {
   if (v > 0) return "pos";
   if (v < 0) return "neg";
@@ -372,6 +379,10 @@ function renderFixtures(data) {
     teams.appendChild(el("span", "league-code", fx.league || "?"));
     teams.appendChild(document.createTextNode(fx.home + " vs " + fx.away));
     row.appendChild(teams);
+
+    const when = el("div", "when");
+    when.textContent = fmtDateTime(fx.commence_time);
+    row.appendChild(when);
 
     const probs = el("div", "probs");
     const m = fx.model || {};

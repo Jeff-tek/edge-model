@@ -167,10 +167,14 @@ def test_past_tips_groups_by_day(tmp_path: Path) -> None:
 
 def test_fixture_section_computes_model_and_edges() -> None:
     model = _model()
-    fixtures = _fixture_section(model, [("E0", "Arsenal", "Chelsea", {"line": 2.5, "over": 1.22, "under": 1.60}), ("SP1", "Unknown", "Side", {"line": None, "over": None, "under": None})])
+    fixtures = _fixture_section(model, [
+        ("E0", "Arsenal", "Chelsea", "2026-08-15T19:00:00+00:00", {"line": 2.5, "over": 1.22, "under": 1.60}),
+        ("SP1", "Unknown", "Side", None, {"line": None, "over": None, "under": None}),
+    ])
     assert len(fixtures) == 2
     entry = fixtures[0]
     assert entry["league"] == "E0"
+    assert entry["commence_time"] == "2026-08-15T19:00:00+00:00"
     assert entry["totals_odds"]["over"] == 1.22
     assert 0.0 < entry["model"]["over1.5"] < 1.0
     assert 0.0 < entry["model"]["under4.5"] < 1.0
@@ -178,6 +182,7 @@ def test_fixture_section_computes_model_and_edges() -> None:
     assert isinstance(entry["qualifies"], list)
     # unknown teams: model should not raise and stays in [0, 1]
     unknown = fixtures[1]
+    assert unknown["commence_time"] is None
     assert 0.0 <= unknown["model"]["over1.5"] <= 1.0
 
 
@@ -224,12 +229,13 @@ def test_build_payload_full_structure(tmp_path: Path) -> None:
         parlay=None,
         paper=paper,
         starting_bankroll=2000.0,
-        fixture_teams=[("E0", "Arsenal", "Chelsea", {"line": 2.5, "over": 1.22, "under": 1.60})],
+        fixture_teams=[("E0", "Arsenal", "Chelsea", "2026-08-15T19:00:00+00:00", {"line": 2.5, "over": 1.22, "under": 1.60})],
     )
     for key in ("generated_at", "as_of_date", "strategy", "backtest", "paper", "fixtures", "tips"):
         assert key in payload
     assert payload["backtest"]["matches"] == 3
     assert payload["fixtures"][0]["league"] == "E0"
+    assert payload["fixtures"][0]["commence_time"] == "2026-08-15T19:00:00+00:00"
 
 
 def test_build_payload_reuses_backtest_dict(tmp_path: Path) -> None:
@@ -313,3 +319,56 @@ def test_fetch_fixtures_by_league_skips_inactive_league(monkeypatch: pytest.Monk
     monkeypatch.setattr(fixtures_mod, "_get_json", fake_get_json)
     by_league = fixtures_mod.fetch_fixtures_by_league(key="test", leagues=["E0", "I1"])
     assert by_league == {}
+
+
+def test_fetch_scores_parses_completed_and_pending(monkeypatch: pytest.MonkeyPatch) -> None:
+    import edge_model.data.fixtures as fixtures_mod
+
+    scores_payload = [
+        {
+            "id": "1",
+            "commence_time": "2026-08-14T19:00:00Z",
+            "home_team": "Arsenal",
+            "away_team": "Chelsea",
+            "completed": True,
+            "scores": [
+                {"name": "Arsenal", "score": "2"},
+                {"name": "Chelsea", "score": "1"},
+            ],
+        },
+        {
+            "id": "2",
+            "commence_time": "2026-08-18T19:00:00Z",
+            "home_team": "Bayern",
+            "away_team": "Bremen",
+            "completed": False,
+            "scores": [],
+        },
+    ]
+
+    def fake_get_json(url: str, timeout: int = 60) -> object:
+        return scores_payload
+
+    monkeypatch.setattr(fixtures_mod, "_get_json", fake_get_json)
+    results = fixtures_mod.fetch_scores(key="test", sport_key="soccer_epl")
+    assert len(results) == 2
+    done = results[0]
+    assert done.completed is True
+    assert done.home_score == 2
+    assert done.away_score == 1
+    assert done.total_goals == 3
+    assert results[1].completed is False
+    assert results[1].total_goals is None
+
+
+def test_fetch_scores_by_league_skips_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
+    import edge_model.data.fixtures as fixtures_mod
+
+    def fake_get_json(url: str, timeout: int = 60) -> object:
+        if "soccer_epl" in url:
+            return []
+        raise urllib.error.HTTPError(url, 403, "Forbidden", None, None)
+
+    monkeypatch.setattr(fixtures_mod, "_get_json", fake_get_json)
+    by_league = fixtures_mod.fetch_scores_by_league(key="test", leagues=["E0", "I1"])
+    assert by_league == {"E0": []}

@@ -96,6 +96,31 @@ def _candidate_legs_from_api(model: TeamModel, fixtures: list[Fixture]) -> list[
     return legs
 
 
+def _settle_from_scores(paper: PaperBook, leagues: list[str]) -> int:
+    from edge_model.data.fixtures import fetch_scores_by_league
+
+    by_league = fetch_scores_by_league(leagues=leagues)
+    results: list[tuple[date, str, str, float]] = []
+    for league_results in by_league.values():
+        for r in league_results:
+            if r.completed and r.total_goals is not None:
+                results.append((r.commence_time.date(), r.home, r.away, float(r.total_goals)))
+    n = paper.settle_from_results(results)
+    if n:
+        print(f"[settled {n} pending trade(s) from live scores]")
+    return n
+
+
+def _fixture_match_map(
+    by_league: dict[str, list[Fixture]],
+) -> dict[tuple[str, str], tuple[str, date]]:
+    return {
+        (fx.home, fx.away): (league, fx.commence_time.date())
+        for league, fxs in by_league.items()
+        for fx in fxs
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Daily edge-model briefing")
     parser.add_argument("--seasons", nargs="+", default=["2324", "2425", "2526"])
@@ -106,6 +131,8 @@ def main() -> None:
     parser.add_argument("--out", default="data/briefing.md")
     parser.add_argument("--dashboard", default="", help="also write dashboard JSON to this path")
     parser.add_argument("--backtest", action="store_true", help="also run the backtest")
+    parser.add_argument("--settle-from-scores", action="store_true",
+                        help="settle pending trades against live scores before briefing")
     args = parser.parse_args()
 
     matches = []
@@ -117,10 +144,19 @@ def main() -> None:
     model = fit_model(matches)
     print(f"fitted {len(matches)} matches across {len(args.leagues)} leagues")
 
+    paper = PaperBook(args.book)
+    if args.settle_from_scores:
+        _settle_from_scores(paper, args.leagues)
+
+    fixture_meta: dict[tuple[str, str], tuple[str, date]] = {}
+
     if args.odds:
         rows = _load_odds_csv(args.odds)
         legs = _candidate_legs_from_csv(model, rows)
         source = f"manual odds file ({args.odds})"
+        for row in rows:
+            if row.get("home") and row.get("away"):
+                fixture_meta[(row["home"], row["away"])] = (row.get("league", ""), date.today())
     else:
         try:
             from edge_model.data.fixtures import fetch_fixtures_by_league
@@ -128,11 +164,11 @@ def main() -> None:
             by_league = fetch_fixtures_by_league(leagues=args.leagues)
             fixtures = [fx for fs in by_league.values() for fx in fs]
             legs = _candidate_legs_from_api(model, fixtures)
+            fixture_meta = _fixture_match_map(by_league)
             source = "TheOddsAPI live odds"
         except RuntimeError as exc:
             raise SystemExit(f"no ODDS_API_KEY and no --odds file: {exc}") from exc
 
-    paper = PaperBook(args.book)
     parlay = assemble_parlay(legs)
     briefing = build_briefing(
         todays_date=date.today(),
@@ -153,14 +189,18 @@ def main() -> None:
         if args.odds:
             rows = _load_odds_csv(args.odds)
             dashboard_legs = _legs_from_csv(model, rows)
-            fixture_teams: list[tuple[str, str, str, dict[str, object]]] = [
-                (row.get("league", ""), row["home"], row["away"], {"line": None, "over": None, "under": None})
+            fixture_teams: list[tuple[str, str, str, str | None, dict[str, object]]] = [
+                (row.get("league", ""), row["home"], row["away"], None,
+                 {"line": None, "over": None, "under": None})
                 for row in rows
                 if row.get("home") and row.get("away")
             ]
         else:
             dashboard_legs = [(leg, "") for leg in legs]
-            fixture_teams = []
+            fixture_teams = [
+                (league, home, away, commence.isoformat(), {"line": None, "over": None, "under": None})
+                for (home, away), (league, commence) in fixture_meta.items()
+            ]
         payload = build_payload(
             matches=matches,
             backtest_result=None,
@@ -176,15 +216,17 @@ def main() -> None:
 
     if parlay is not None:
         for leg in parlay.legs:
+            league, match_date = fixture_meta.get((leg.home, leg.away), ("", date.today()))
             paper.append(
                 sport="football",
-                league=args.leagues[0] if len(args.leagues) == 1 else "",
+                league=league,
                 home=leg.home,
                 away=leg.away,
                 line=leg.line,
                 side=leg.side,
                 odds=leg.decimal_odds,
                 stake=parlay.stake,
+                match_date=match_date,
             )
 
     if args.backtest:

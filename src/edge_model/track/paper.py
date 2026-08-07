@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import datetime as dt
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -11,6 +12,7 @@ PAUSE_AFTER_LOSSES = 5
 
 FIELDS = [
     "date",
+    "match_date",  # when the match is played ("" = unknown/placement day)
     "sport",
     "league",
     "home",
@@ -29,6 +31,7 @@ FIELDS = [
 @dataclass(frozen=True, slots=True)
 class Trade:
     date: date
+    match_date: dt.date | None
     sport: str
     league: str
     home: str
@@ -53,6 +56,21 @@ class PaperBook:
             with self.path.open("w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=FIELDS)
                 writer.writeheader()
+        else:
+            self._migrate_header()
+
+    def _migrate_header(self) -> None:
+        """Bring an older CSV (missing match_date) up to the current FIELDS."""
+        with self.path.open(newline="") as f:
+            header = f.readline().strip().split(",")
+        if header == FIELDS:
+            return
+        rows = self._rows()
+        with self.path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDS)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow({field: row.get(field, "") for field in FIELDS})
 
     def _rows(self) -> list[dict[str, str]]:
         with self.path.open(newline="") as f:
@@ -70,6 +88,7 @@ class PaperBook:
         side: str,
         odds: float,
         stake: float,
+        match_date: date | None = None,
         note: str = "",
     ) -> None:
         with self.path.open("a", newline="") as f:
@@ -77,6 +96,7 @@ class PaperBook:
             writer.writerow(
                 {
                     "date": date.today().isoformat(),
+                    "match_date": match_date.isoformat() if match_date else "",
                     "sport": sport,
                     "league": league,
                     "home": home,
@@ -92,18 +112,46 @@ class PaperBook:
                 }
             )
 
-    def settle(self, home: str, away: str, actual_total: float, *, line: float = 2.5) -> bool:
-        """Settle the oldest pending trade for a fixture. Returns True if settled."""
+    def settle(
+        self,
+        home: str,
+        away: str,
+        actual_total: float,
+        *,
+        line: float = 2.5,
+        match_date: date | None = None,
+    ) -> bool:
+        """Settle the oldest pending trade matching a fixture. Returns True if settled."""
         rows = self._rows()
         for row in rows:
-            if row["result"] == "pending" and row["home"] == home and row["away"] == away:
-                over = actual_total > float(row["line"] or line)
-                won = (row["side"] == "over") == over
-                row["result"] = "win" if won else "loss"
-                row["payout"] = f"{float(row['odds']) * float(row['stake']):.2f}" if won else "0.00"
-                self._rewrite(rows)
-                return True
+            if row["result"] != "pending" or row["home"] != home or row["away"] != away:
+                continue
+            if match_date is not None:
+                try:
+                    row_match = datetime.strptime(row["match_date"], "%Y-%m-%d").date()
+                except ValueError:
+                    row_match = None
+                if row_match != match_date:
+                    continue
+            over = actual_total > float(row["line"] or line)
+            won = (row["side"] == "over") == over
+            row["result"] = "win" if won else "loss"
+            row["payout"] = f"{float(row['odds']) * float(row['stake']):.2f}" if won else "0.00"
+            self._rewrite(rows)
+            return True
         return False
+
+    def settle_from_results(self, results: list[tuple[date, str, str, float]]) -> int:
+        """Settle pending trades from (match_date, home, away, actual_total) tuples.
+
+        Only trades whose match_date matches are settled, so results from a later
+        matchday never touch trades from an earlier one.
+        """
+        settled = 0
+        for match_date, home, away, actual_total in results:
+            if self.settle(home, away, actual_total, match_date=match_date):
+                settled += 1
+        return settled
 
     def _rewrite(self, rows: list[dict[str, str]]) -> None:
         with self.path.open("w", newline="") as f:
@@ -114,9 +162,16 @@ class PaperBook:
     def trades(self) -> list[Trade]:
         out: list[Trade] = []
         for row in self._rows():
+            match_date: date | None = None
+            if row.get("match_date"):
+                try:
+                    match_date = datetime.strptime(row["match_date"], "%Y-%m-%d").date()
+                except ValueError:
+                    match_date = None
             out.append(
                 Trade(
                     date=datetime.strptime(row["date"], "%Y-%m-%d").date(),
+                    match_date=match_date,
                     sport=row["sport"],
                     league=row["league"],
                     home=row["home"],

@@ -60,6 +60,23 @@ class Fixture:
     totals: tuple[MarketLine, ...]  # usually just one line (2.5)
 
 
+@dataclass(frozen=True, slots=True)
+class ScoreResult:
+    id: str
+    commence_time: datetime
+    home: str
+    away: str
+    completed: bool
+    home_score: int | None
+    away_score: int | None
+
+    @property
+    def total_goals(self) -> int | None:
+        if self.home_score is None or self.away_score is None:
+            return None
+        return self.home_score + self.away_score
+
+
 def _get_json(url: str, timeout: int = 60) -> object:
     req = urllib.request.Request(url, headers={"Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -172,4 +189,87 @@ def fetch_fixtures_by_league(
             print(f"[fixtures] {league} ({sport}) unavailable ({exc.code}): {exc.reason}")
         except urllib.error.URLError as exc:
             print(f"[fixtures] {league} ({sport}) network error: {exc.reason}")
+    return out
+
+
+def fetch_scores(
+    *,
+    key: str | None = None,
+    sport_key: str | None = None,
+    days_from: int = 3,
+    timeout: int = 60,
+) -> list[ScoreResult]:
+    """Fetch recent match results (scores) for a sport key from TheOddsAPI."""
+    api_key = key or _api_key()
+    sport = sport_key or os.environ.get("SPORT_KEY", SPORT)
+    query = urllib.parse.urlencode(
+        {"apiKey": api_key, "daysFrom": days_from, "dateFormat": "iso"}
+    )
+    url = f"{API_BASE}/sports/{sport}/scores/?{query}"
+    data = _get_json(url, timeout=timeout)
+    if not isinstance(data, list):
+        raise RuntimeError(f"unexpected TheOddsAPI scores response: {data!r}")
+
+    out: list[ScoreResult] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        commence = item.get("commence_time")
+        try:
+            start = datetime.fromisoformat(str(commence).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            continue
+        home_score: int | None = None
+        away_score: int | None = None
+        scores = item.get("scores")
+        if isinstance(scores, list):
+            for s in scores:
+                if not isinstance(s, dict) or s.get("name") not in (item.get("home_team"), item.get("away_team")):
+                    continue
+                try:
+                    val = int(str(s.get("score", "")))
+                except (ValueError, TypeError):
+                    val = None
+                if s.get("name") == item.get("home_team"):
+                    home_score = val
+                else:
+                    away_score = val
+        out.append(
+            ScoreResult(
+                id=str(item.get("id", "")),
+                commence_time=start.astimezone(UTC),
+                home=str(item.get("home_team", "")),
+                away=str(item.get("away_team", "")),
+                completed=bool(item.get("completed", False)),
+                home_score=home_score,
+                away_score=away_score,
+            )
+        )
+    return out
+
+
+def fetch_scores_by_league(
+    *,
+    key: str | None = None,
+    leagues: list[str] | None = None,
+    days_from: int = 3,
+    timeout: int = 60,
+) -> dict[str, list[ScoreResult]]:
+    """Fetch recent results for each model league; unreachable leagues skipped."""
+    api_key = key or _api_key()
+    wanted = leagues or list(LEAGUE_SPORT_KEYS)
+    out: dict[str, list[ScoreResult]] = {}
+    for league in wanted:
+        sport = LEAGUE_SPORT_KEYS.get(league)
+        if sport is None:
+            print(f"[scores] no sport key for league {league!r}, skipping")
+            continue
+        try:
+            results = fetch_scores(key=api_key, sport_key=sport, days_from=days_from, timeout=timeout)
+            out[league] = results
+            print(f"[scores] {league} ({sport}): {len(results)} results")
+        except urllib.error.HTTPError as exc:
+            print(f"[scores] {league} ({sport}) unavailable ({exc.code}): {exc.reason}")
+        except urllib.error.URLError as exc:
+            print(f"[scores] {league} ({sport}) network error: {exc.reason}")
     return out

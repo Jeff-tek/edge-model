@@ -124,6 +124,7 @@ def _empty_backtest(n_matches: int, leagues: list[str], seasons: list[str]) -> d
 def _trade_dict(t: Trade) -> dict[str, object]:
     return {
         "date": t.date.isoformat(),
+        "match_date": t.match_date.isoformat() if t.match_date else "",
         "league": t.league,
         "home": t.home,
         "away": t.away,
@@ -218,11 +219,12 @@ def _past_tips(paper: PaperBook) -> list[dict[str, object]]:
 
 def _fixture_section(
     model: TeamModel,
-    fixtures: list[tuple[str, str, str, dict[str, object]]],
+    fixtures: list[tuple[str, str, str, str | None, dict[str, object]]],
 ) -> list[dict[str, object]]:
-    """One entry per fixture (league, home, away, totals_odds): model probs + edges."""
+    """One entry per fixture (league, home, away, commence_iso, totals_odds):
+    model probs + edges."""
     out: list[dict[str, object]] = []
-    for league, home, away, totals_odds in fixtures:
+    for league, home, away, commence_iso, totals_odds in fixtures:
         over1_5 = p_over(model, home, away, 1.5)
         under4_5 = 1.0 - p_over(model, home, away, 4.5)
         fair_over = 1.0 / (BOOK_ODDS[("over", 1.5)] * (1.0 + BOOK_MARGIN[("over", 1.5)]))
@@ -236,7 +238,7 @@ def _fixture_section(
             qualifies.append("under4.5")
         out.append(
             {
-                "commence_time": None,
+                "commence_time": commence_iso,
                 "league": league,
                 "home": home,
                 "away": away,
@@ -330,7 +332,7 @@ def build_payload(
     parlay: Parlay | None,
     paper: PaperBook,
     starting_bankroll: float,
-    fixture_teams: list[tuple[str, str, str, dict[str, object]]] | None = None,
+    fixture_teams: list[tuple[str, str, str, str | None, dict[str, object]]] | None = None,
     backtest_dict: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Assemble the full dashboard payload from live data.
@@ -441,7 +443,7 @@ def main() -> None:
     print(f"fitted {len(matches)} matches across {len(args.leagues)} leagues")
 
     legs: list[tuple[Leg, str]] = []
-    fixture_teams: list[tuple[str, str, str, dict[str, object]]] = []
+    fixture_teams: list[tuple[str, str, str, str | None, dict[str, object]]] = []
     if args.odds:
         import csv
 
@@ -456,6 +458,7 @@ def main() -> None:
                         row.get("league", ""),
                         row["home"],
                         row["away"],
+                        None,
                         {"line": None, "over": None, "under": None},
                     )
                 )
@@ -476,6 +479,7 @@ def main() -> None:
                             league,
                             fx.home,
                             fx.away,
+                            fx.commence_time.isoformat(),
                             totals.get(
                                 (fx.home, fx.away),
                                 {"line": None, "over": None, "under": None},
