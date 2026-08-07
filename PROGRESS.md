@@ -137,7 +137,14 @@ PY
 1. ~~Make backtest.py match the honest per-side pricing~~ — done (70995d5)
 2. ~~Push to GitHub → CI green~~ — done (d613342, CI + Pages both green)
 3. ~~Write README.md~~ — done
-4. **Paper-trade forward**: run daily briefing once football season resumes,
-   log to `data/paper_trades.csv`, review after 20+ parlays.
+4. **Paper-trade forward (2026-08-07, shipped 662c821):**
+   - Dashboard fixtures now show commence_time (was null) — live dates on Pages
+   - PaperBook logs match_date per leg; `daily.py` records real league + match date
+   - `cli/settle.py`: settle pending trades from a results CSV
+     (`match_date,home,away,total`) or live scores (`--from-scores`)
+   - `daily.py --settle-from-scores` settles before writing the briefing
+   - Old paper CSVs auto-migrate (match_date column added)
+   - Daily loop: run `python -m edge_model.cli.daily --settle-from-scores`
+     each matchday morning, review after 20+ parlays
 5. **Tennis module** (next big feature) — new model league for the local bookie's
    second market; add after football paper-trade data starts accumulating.

@@ -22,6 +22,14 @@ python -m edge_model.cli.daily \
   --seasons 2324 2425 2526 --leagues E0 SP1 I1 D1 F1 \
   --odds odds_today.csv --bankroll 2000
 
+# daily briefing with live TheOddsAPI odds (settles yesterday first)
+ODDS_API_KEY=xxx python -m edge_model.cli.daily --settle-from-scores
+
+# settle pending paper trades from a results CSV (match_date,home,away,total)
+python -m edge_model.cli.settle --results results.csv
+# ...or pull results from live scores
+ODDS_API_KEY=xxx python -m edge_model.cli.settle --from-scores
+
 # walk-forward backtest on real data
 python - <<'PY'
 from edge_model.data.football_data import load_big5
