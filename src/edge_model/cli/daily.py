@@ -21,8 +21,11 @@ from pathlib import Path
 
 from edge_model.backtest.backtest import run_backtest
 from edge_model.data.fixtures import Fixture, group_fixtures_by_line
-from edge_model.data.football_data import load_league
-from edge_model.model.dixon_coles import TeamModel, fit_model, p_over
+from edge_model.data.football_data import Match, load_league
+from edge_model.data.xg import DEFAULT_XG_WEIGHT, XgTable, load_xg_csv
+from edge_model.features.context import adjust_prob, signals_for
+from edge_model.model.dixon_coles import TeamModel, fit_model
+from edge_model.model.mix import blended_over_prob
 from edge_model.report.briefing import build_briefing
 from edge_model.track.paper import PaperBook
 from edge_model.value.filter import (
@@ -44,6 +47,10 @@ def _load_odds_csv(path: str) -> list[dict[str, str]]:
 def _candidate_legs_from_csv(
     model: TeamModel,
     rows: list[dict[str, str]],
+    history: list[Match] | None = None,
+    xg_table: XgTable | None = None,
+    xg_weight: float = DEFAULT_XG_WEIGHT,
+    use_context: bool = False,
 ) -> list[Leg]:
     legs: list[Leg] = []
     for row in rows:
@@ -58,7 +65,15 @@ def _candidate_legs_from_csv(
             continue
         if not (MIN_LEG_ODDS <= odds <= MAX_LEG_ODDS):
             continue
-        over_prob = p_over(model, row["home"], row["away"], line)
+        league = row.get("league", "")
+        over_prob = blended_over_prob(
+            model, row["home"], row["away"], line, league, xg_table, xg_weight
+        )
+        if use_context and history is not None:
+            over_prob = adjust_prob(
+                over_prob,
+                signals_for(row["home"], row["away"], date.today(), history, league),
+            )
         legs.append(
             evaluate_leg(
                 home=row["home"],
@@ -73,7 +88,14 @@ def _candidate_legs_from_csv(
     return legs
 
 
-def _candidate_legs_from_api(model: TeamModel, fixtures: list[Fixture]) -> list[Leg]:
+def _candidate_legs_from_api(
+    model: TeamModel,
+    fixtures: list[Fixture],
+    history: list[Match] | None = None,
+    xg_table: XgTable | None = None,
+    xg_weight: float = DEFAULT_XG_WEIGHT,
+    use_context: bool = False,
+) -> list[Leg]:
     legs: list[Leg] = []
     for side, line in ALLOWED_MARKETS:
         for fixture, market in group_fixtures_by_line(fixtures, line):
@@ -81,7 +103,19 @@ def _candidate_legs_from_api(model: TeamModel, fixtures: list[Fixture]) -> list[
             other = market.under_odds if side == "over" else market.over_odds
             if odds is None or not (MIN_LEG_ODDS <= odds <= MAX_LEG_ODDS):
                 continue
-            over_prob = p_over(model, fixture.home, fixture.away, market.point)
+            over_prob = blended_over_prob(
+                model, fixture.home, fixture.away, market.point, "", xg_table, xg_weight,
+            )
+            if use_context and history is not None:
+                over_prob = adjust_prob(
+                    over_prob,
+                    signals_for(
+                        fixture.home,
+                        fixture.away,
+                        fixture.commence_time.date(),
+                        history,
+                    ),
+                )
             legs.append(
                 evaluate_leg(
                     home=fixture.home,
@@ -133,9 +167,12 @@ def main() -> None:
     parser.add_argument("--backtest", action="store_true", help="also run the backtest")
     parser.add_argument("--settle-from-scores", action="store_true",
                         help="settle pending trades against live scores before briefing")
+    parser.add_argument("--xg-csv", default="", help="offline team xG CSV (league,team,gp,xg_for,xg_against)")
+    parser.add_argument("--xg-weight", type=float, default=DEFAULT_XG_WEIGHT)
+    parser.add_argument("--use-context", action="store_true", help="apply rest/congestion/dead-rubber adjustments")
     args = parser.parse_args()
 
-    matches = []
+    matches: list[Match] = []
     for league in args.leagues:
         matches.extend(load_league(args.seasons, league))
     if not matches:
@@ -143,6 +180,10 @@ def main() -> None:
 
     model = fit_model(matches)
     print(f"fitted {len(matches)} matches across {len(args.leagues)} leagues")
+
+    xg_table: XgTable | None = load_xg_csv(args.xg_csv) if args.xg_csv else None
+    if xg_table is not None:
+        print(f"loaded xG table: {len(xg_table)} teams (weight {args.xg_weight})")
 
     paper = PaperBook(args.book)
     if args.settle_from_scores:
@@ -152,7 +193,9 @@ def main() -> None:
 
     if args.odds:
         rows = _load_odds_csv(args.odds)
-        legs = _candidate_legs_from_csv(model, rows)
+        legs = _candidate_legs_from_csv(
+            model, rows, matches, xg_table, args.xg_weight, args.use_context
+        )
         source = f"manual odds file ({args.odds})"
         for row in rows:
             if row.get("home") and row.get("away"):
@@ -163,7 +206,9 @@ def main() -> None:
 
             by_league = fetch_fixtures_by_league(leagues=args.leagues)
             fixtures = [fx for fs in by_league.values() for fx in fs]
-            legs = _candidate_legs_from_api(model, fixtures)
+            legs = _candidate_legs_from_api(
+                model, fixtures, matches, xg_table, args.xg_weight, args.use_context
+            )
             fixture_meta = _fixture_match_map(by_league)
             source = "TheOddsAPI live odds"
         except RuntimeError as exc:

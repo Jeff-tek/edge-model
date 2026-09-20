@@ -20,7 +20,10 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from edge_model.data.football_data import Match
-from edge_model.model.dixon_coles import fit_model, p_over
+from edge_model.data.xg import DEFAULT_XG_WEIGHT, XgTable
+from edge_model.features.context import adjust_prob, signals_for
+from edge_model.model.dixon_coles import fit_model
+from edge_model.model.mix import blended_over_prob
 from edge_model.value.filter import (
     MAX_LEGS,
     MIN_LEGS,
@@ -145,11 +148,18 @@ def run_backtest(
     stake_per_bet: float = 100.0,
     min_edge: float = MIN_EDGE,
     window_days: int = WINDOW_DAYS,
+    xg_table: XgTable | None = None,
+    xg_weight: float = DEFAULT_XG_WEIGHT,
+    use_context: bool = False,
 ) -> BacktestResult:
     """Walk-forward parlay simulation over a set of matches.
 
     A leg is playable when model prob beats the de-vigged fair implied
     probability of its per-side book price: fair = 1 / (odds * (1 + margin)).
+
+    Optional upgrades (both off by default, so existing results reproduce):
+      xg_table: blend Dixon-Coles with offline xG Poisson probs.
+      use_context: penalize tired/congested/dead-rubber overs via date history.
     """
     odds = book_odds if book_odds is not None else dict(BOOK_ODDS)
     margin = book_margin if book_margin is not None else dict(BOOK_MARGIN)
@@ -185,7 +195,13 @@ def run_backtest(
             for side, line in OVERS:
                 if not is_allowed_market(side, line):
                     continue
-                over_prob = p_over(model, m.home, m.away, line)
+                over_prob = blended_over_prob(
+                    model, m.home, m.away, line, m.league, xg_table, xg_weight
+                )
+                if use_context:
+                    over_prob = adjust_prob(
+                        over_prob, signals_for(m.home, m.away, m.date, history, m.league)
+                    )
                 prob = over_prob if side == "over" else 1.0 - over_prob
                 if prob - fair_implied[(side, line)] >= min_edge:
                     by_day.setdefault(m.date, []).append(
