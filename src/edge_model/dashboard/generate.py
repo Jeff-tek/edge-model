@@ -463,6 +463,31 @@ def main() -> None:
                     )
                 )
     else:
+        prev_fixtures: list[tuple[str, str, str, str | None, dict[str, object]]] | None = None
+        if Path(args.out).exists():
+            try:
+                _prev = json.loads(Path(args.out).read_text())
+                if isinstance(_prev.get("fixtures"), list):
+                    raw_prev_fx = _prev.get("fixtures", [])
+                    if isinstance(raw_prev_fx, list) and raw_prev_fx:
+                        tmp: list[tuple[str, str, str, str | None, dict[str, object]]] = []
+                        for fx in raw_prev_fx:
+                            if not isinstance(fx, dict) or not fx.get("home") or not fx.get("away"):
+                                continue
+                            commence = fx.get("commence_time")
+                            totals = fx.get("totals_odds")
+                            tmp.append(
+                                (
+                                    str(fx.get("league", "")),
+                                    str(fx.get("home", "")),
+                                    str(fx.get("away", "")),
+                                    str(commence) if commence is not None else None,
+                                    totals if isinstance(totals, dict) else {"line": None, "over": None, "under": None},
+                                )
+                            )
+                        prev_fixtures = tmp
+            except (json.JSONDecodeError, OSError):
+                pass
         try:
             from edge_model.cli.daily import _candidate_legs_from_api
             from edge_model.data.fixtures import fetch_fixtures_by_league
@@ -486,8 +511,14 @@ def main() -> None:
                             ),
                         )
                     )
+            if not fixture_teams and prev_fixtures:
+                print("no live fixtures returned — reusing fixtures from previous dashboard build")
+                fixture_teams = prev_fixtures
         except RuntimeError as exc:
             print(f"no live odds available: {exc}")
+            if not fixture_teams and prev_fixtures:
+                print("reusing fixtures from previous dashboard build")
+                fixture_teams = prev_fixtures
 
     paper = PaperBook(args.book)
     parlay = assemble_parlay([leg for leg, _ in legs])
