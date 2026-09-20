@@ -32,6 +32,9 @@ strict = true
 files = ["src"]
 warn_unused_configs = true
 
+[tool.vercel]
+entrypoint = "api/index.py"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pip install -e . && python -m edge_model.dashboard.generate --out dashboard/data.json --skip-backtest --seasons 2324 2425 2526 --leagues E0 SP1 I1 D1 F1",
+  "outputDirectory": "dashboard",
+  "framework": null,
+  "installCommand": "pip install -e ."
+}
